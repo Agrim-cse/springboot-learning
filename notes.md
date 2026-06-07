@@ -2,11 +2,11 @@
 
 ## Progress
 
-- [ ] HTTP + JSON
-- [ ] Spring Boot Basics
-- [ ] Controllers
-- [ ] Services
-- [ ] Dependency Injection
+- [x] HTTP + JSON
+- [x] Spring Boot Basics
+- [x] Controllers
+- [x] Services
+- [x] Dependency Injection
 - [ ] PostgreSQL
 - [ ] JPA/Hibernate
 - [ ] Validation
