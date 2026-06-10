@@ -15,4 +15,7 @@ public class StudentService {
                 new Student(3, "Priya", 8.78)
         );
     }
+    public Student getStudentById(int id) {
+        return new Student(id, "Student " + id, 8.0);
+    }
 }
