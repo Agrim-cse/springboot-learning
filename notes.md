@@ -7,8 +7,8 @@
 - [x] Controllers
 - [x] Services
 - [x] Dependency Injection
-- [ ] PostgreSQL
-- [ ] JPA/Hibernate
+- [x] PostgreSQL
+- [x] JPA/Hibernate
 - [ ] Validation
 - [ ] Exception Handling
 - [ ] JWT Authentication
