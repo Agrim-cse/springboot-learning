@@ -33,6 +33,10 @@ public class HelloController {
     public String greet(@RequestParam(defaultValue = "User") String name) {
         return "Hello " + name;
     }
+    @PostMapping("/students")
+    public Student addStudent(@RequestBody Student student) {
+        return studentService.saveStudent(student);
+    }
     // endpoints
 }
 

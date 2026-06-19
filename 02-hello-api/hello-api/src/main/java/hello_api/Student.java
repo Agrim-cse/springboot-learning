@@ -1,7 +1,13 @@
 package hello_api;
+import jakarta.persistence.*;
 
+@Entity
+@Table(name="students")
 public class Student {
-    private int id;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
     private String name;
     private double cgpa;
 
@@ -25,5 +31,15 @@ public class Student {
         return cgpa;
     }
 
+    public void setId(Integer id) {
+        this.id = id;
+    }
 
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setCgpa(double cgpa) {
+        this.cgpa = cgpa;
+    }
 }
