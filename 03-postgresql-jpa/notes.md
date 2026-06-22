@@ -124,6 +124,14 @@ public interface StudentRepository
 
 without writing SQL.
 
+CRUD Mapping
+
+POST   -> save()
+GET    -> findAll()
+GET/id -> findById()
+PUT    -> findById() + save()
+DELETE -> deleteById()
+
 ---
 
 ## Dependency Injection
