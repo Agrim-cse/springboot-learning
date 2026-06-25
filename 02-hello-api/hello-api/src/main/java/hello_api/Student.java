@@ -1,5 +1,8 @@
 package hello_api;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 
 @Entity
 @Table(name="students")
@@ -8,7 +11,12 @@ public class Student {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+
+    @NotBlank
     private String name;
+
+    @Min(0)
+    @Max(10)
     private double cgpa;
 
     public Student() {

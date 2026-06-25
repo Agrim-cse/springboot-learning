@@ -17,7 +17,8 @@ public class StudentService {
         return studentRepository.findAll();
     }
     public Student getStudentById(int id) {
-        return studentRepository.findById(id).orElse(null);
+        //return studentRepository.findById(id).orElse(null);
+        throw new RuntimeException("Student not found");
     }
     public Student saveStudent(Student student) {
         return studentRepository.save(student);

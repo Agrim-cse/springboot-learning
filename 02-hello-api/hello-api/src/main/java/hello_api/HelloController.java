@@ -1,6 +1,7 @@
 package hello_api;
 
 import hello_api.service.StudentService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,7 +30,7 @@ public class HelloController {
         return "Hello " + name;
     }
     @PostMapping("/students")
-    public Student addStudent(@RequestBody Student student) {
+    public Student addStudent(@Valid @RequestBody Student student) {
         return studentService.saveStudent(student);
     }
     @DeleteMapping("/students/{id}")
@@ -40,7 +41,7 @@ public class HelloController {
     @PutMapping("/students/{id}")
     public Student updateStudent(
             @PathVariable int id,
-            @RequestBody Student student) {
+            @Valid @RequestBody Student student) {
 
         return studentService.updateStudent(id, student);
     }

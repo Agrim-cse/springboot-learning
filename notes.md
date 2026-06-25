@@ -9,7 +9,7 @@
 - [x] Dependency Injection
 - [x] PostgreSQL
 - [x] JPA/Hibernate
-- [ ] Validation
+- [x] Validation
 - [ ] Exception Handling
 - [ ] JWT Authentication
 - [ ] Project
