@@ -41,9 +41,9 @@ private String name;
 
 Rejects:
 
-* null
-* ""
-* only spaces
+* `null`
+* `""`
+* Only spaces
 
 ---
 
@@ -55,15 +55,17 @@ Rejects:
 private double cgpa;
 ```
 
-Ensures CGPA remains between 0 and 10.
+Ensures CGPA remains between **0 and 10**.
 
 ---
 
 ## @Valid
 
 ```java
-public Student addStudent(
-        @Valid @RequestBody Student student)
+@PostMapping("/students")
+public Student addStudent(@Valid @RequestBody Student student) {
+    return studentService.saveStudent(student);
+}
 ```
 
 Purpose:
@@ -76,43 +78,93 @@ Without `@Valid`, validation annotations are ignored.
 
 ## Validation Flow
 
+```
 Request
-↓
+   ↓
 Validation
-↓
+   ↓
 Controller
-↓
+   ↓
 Service
-↓
+   ↓
 Repository
-↓
+   ↓
 Database
+```
 
 If validation fails:
 
+```
 Request
-↓
+   ↓
 Validation ❌
-↓
+   ↓
 400 Bad Request
+```
 
 ---
 
 # Exception Handling
 
-## Problem
+## Why Exception Handling?
 
-Default Spring error responses are often large and difficult to read.
+Instead of letting Spring return a large default error response, we can return cleaner and more meaningful responses.
 
-Example:
+---
 
-```json
-{
-  "timestamp": "...",
-  "status": 500,
-  "error": "Internal Server Error"
+## Custom Exception
+
+Created:
+
+```java
+public class StudentNotFoundException extends RuntimeException {
+
+    public StudentNotFoundException(String message) {
+        super(message);
+    }
 }
 ```
+
+### Why create a custom exception?
+
+Instead of:
+
+```java
+throw new RuntimeException("Student not found");
+```
+
+we write:
+
+```java
+throw new StudentNotFoundException("Student not found");
+```
+
+This makes the code more readable and allows different exceptions to be handled differently.
+
+---
+
+## orElseThrow()
+
+Instead of:
+
+```java
+studentRepository.findById(id).orElse(null);
+```
+
+we now use:
+
+```java
+studentRepository.findById(id)
+        .orElseThrow(() ->
+                new StudentNotFoundException(
+                        "Student with id " + id + " not found"));
+```
+
+### Purpose
+
+If the student exists, return it.
+
+Otherwise, throw a custom exception.
 
 ---
 
@@ -122,9 +174,16 @@ Example:
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(Exception.class)
-    public String handleException(Exception ex) {
-        return ex.getMessage();
+    @ExceptionHandler(StudentNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleStudentNotFound(
+            StudentNotFoundException ex) {
+
+        return new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                ex.getMessage(),
+                LocalDateTime.now()
+        );
     }
 }
 ```
@@ -133,7 +192,7 @@ public class GlobalExceptionHandler {
 
 ## @RestControllerAdvice
 
-Used to handle exceptions globally in REST APIs.
+Used to handle exceptions globally for all REST controllers.
 
 Equivalent to:
 
@@ -147,62 +206,153 @@ Equivalent to:
 
 ## @ExceptionHandler
 
-Used to catch exceptions and customize responses.
+Used to specify which exception a method should handle.
 
 Example:
 
 ```java
-@ExceptionHandler(Exception.class)
+@ExceptionHandler(StudentNotFoundException.class)
 ```
-
-Handles all exceptions of type `Exception`.
 
 ---
 
-## Example
-
-Exception:
+## @ResponseStatus
 
 ```java
-throw new RuntimeException("Student not found");
+@ResponseStatus(HttpStatus.NOT_FOUND)
 ```
 
-Response:
+Changes the HTTP response status.
 
-```text
-Student not found
+Example:
+
+```
+404 Not Found
 ```
 
-instead of Spring's default error response.
+instead of
+
+```
+500 Internal Server Error
+```
+
+---
+
+## ErrorResponse
+
+Instead of returning a plain string, we return an object.
+
+```java
+public class ErrorResponse {
+
+    private int status;
+    private String message;
+    private LocalDateTime timestamp;
+
+}
+```
+
+Spring automatically converts it into JSON.
+
+Example response:
+
+```json
+{
+    "status": 404,
+    "message": "Student with id 999 not found",
+    "timestamp": "2026-06-25T14:30:00"
+}
+```
+
+---
+
+## Jackson
+
+Spring Boot uses **Jackson** internally to convert Java objects into JSON automatically.
+
+Example:
+
+```java
+return new Student(...);
+```
+
+↓
+
+```json
+{
+    "id": 1,
+    "name": "Agrim",
+    "cgpa": 8.5
+}
+```
+
+The same happens for `ErrorResponse`.
 
 ---
 
 ## Error Flow
 
-Before:
+### Student Exists
 
-Exception
-↓
-Spring Default Error Response
+```
+Request
+   ↓
+Controller
+   ↓
+Service
+   ↓
+Repository
+   ↓
+Student Found
+   ↓
+Response
+```
 
-After:
+### Student Not Found
 
-Exception
-↓
+```
+Request
+   ↓
+Controller
+   ↓
+Service
+   ↓
+findById()
+   ↓
+orElseThrow()
+   ↓
+StudentNotFoundException
+   ↓
 GlobalExceptionHandler
-↓
-Custom Response
+   ↓
+ErrorResponse
+   ↓
+404 Not Found
+```
 
 ---
 
-## ControllerAdvice vs RestControllerAdvice
+## HTTP Status Codes Learned
 
-### @ControllerAdvice
+| Status Code                   | Meaning                 |
+| ----------------------------- | ----------------------- |
+| **200 OK**                    | Request successful      |
+| **400 Bad Request**           | Invalid request data    |
+| **404 Not Found**             | Resource does not exist |
+| **500 Internal Server Error** | Unexpected server error |
 
-Used mainly with MVC applications and HTML views.
+---
 
-### @RestControllerAdvice
+## Concepts Learned
 
-Used with REST APIs.
-
-Returns response data directly in the HTTP response body.
+* Validation using `@Valid`
+* `@NotBlank`
+* `@Min`
+* `@Max`
+* `@RestControllerAdvice`
+* `@ExceptionHandler`
+* Custom Exceptions
+* `orElseThrow()`
+* `@ResponseStatus`
+* `ErrorResponse`
+* Jackson Object → JSON conversion
