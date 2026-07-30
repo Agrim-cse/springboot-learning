@@ -10,6 +10,5 @@
 - [x] PostgreSQL
 - [x] JPA/Hibernate
 - [x] Validation
-- [ ] Exception Handling
-- [ ] JWT Authentication
-- [ ] Project
+- [x] Exception Handling
+- [x] JWT Authentication

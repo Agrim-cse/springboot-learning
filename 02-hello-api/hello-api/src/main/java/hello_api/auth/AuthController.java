@@ -1,6 +1,8 @@
 package hello_api.auth;
 
 import hello_api.security.JwtUtil;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -8,20 +10,25 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final JwtUtil jwtUtil;
+    private final AuthenticationManager authenticationManager;
 
-    public AuthController(JwtUtil jwtUtil) {
+    public AuthController(JwtUtil jwtUtil,
+                          AuthenticationManager authenticationManager) {
+
         this.jwtUtil = jwtUtil;
+        this.authenticationManager = authenticationManager;
     }
 
     @PostMapping("/login")
     public String login(@RequestBody LoginRequest request) {
 
-        if (request.getUsername().equals("agrim")
-                && request.getPassword().equals("password123")) {
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        request.getUsername(),
+                        request.getPassword()
+                )
+        );
 
-            return jwtUtil.generateToken(request.getUsername());
-        }
-
-        return "Invalid Credentials";
+        return jwtUtil.generateToken(request.getUsername());
     }
 }

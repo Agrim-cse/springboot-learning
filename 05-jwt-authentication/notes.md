@@ -445,3 +445,350 @@ Response:
 - UsernamePasswordAuthenticationToken
 - Security Filter Chain
 - Protected REST APIs
+
+---
+
+# AuthenticationManager
+
+## Why AuthenticationManager?
+
+Earlier, authentication was done manually.
+
+Example:
+
+```java
+if (request.getUsername().equals("agrim")
+        && request.getPassword().equals("password123")) {
+
+    return jwtUtil.generateToken(request.getUsername());
+}
+```
+
+This approach is not recommended because the controller is responsible for verifying credentials.
+
+Instead, Spring Security provides an `AuthenticationManager`.
+
+---
+
+## AuthenticationManager Flow
+
+```text
+Login Request
+        │
+        ▼
+AuthenticationManager
+        │
+        ▼
+UserDetailsService
+        │
+        ▼
+PasswordEncoder
+        │
+        ▼
+Authentication Successful
+        │
+        ▼
+Generate JWT
+```
+
+---
+
+## Creating AuthenticationManager Bean
+
+```java
+@Bean
+public AuthenticationManager authenticationManager(
+        AuthenticationConfiguration configuration)
+        throws Exception {
+
+    return configuration.getAuthenticationManager();
+}
+```
+
+Purpose:
+
+Provides Spring Security's authentication engine.
+
+---
+
+## Authenticating a User
+
+```java
+authenticationManager.authenticate(
+        new UsernamePasswordAuthenticationToken(
+                request.getUsername(),
+                request.getPassword()
+        )
+);
+```
+
+Purpose:
+
+Delegates username and password verification to Spring Security.
+
+If authentication succeeds:
+
+- Execution continues.
+- JWT can be generated.
+
+If authentication fails:
+
+- BadCredentialsException is thrown.
+
+---
+
+# BadCredentialsException
+
+Thrown when:
+
+- Username is incorrect.
+- Password is incorrect.
+
+Instead of returning:
+
+```http
+500 Internal Server Error
+```
+
+it should return:
+
+```http
+401 Unauthorized
+```
+
+Handled using:
+
+```java
+@ExceptionHandler(BadCredentialsException.class)
+```
+
+---
+
+# Password Hashing
+
+Passwords should never be stored as plain text.
+
+Wrong:
+
+```text
+password123
+```
+
+Correct:
+
+```text
+$2a$10$8Qx...
+```
+
+Hashing protects user passwords even if the database is compromised.
+
+---
+
+# BCrypt
+
+Spring Security uses BCrypt for password hashing.
+
+Create a PasswordEncoder bean:
+
+```java
+@Bean
+public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
+}
+```
+
+---
+
+## Encoding Passwords
+
+```java
+passwordEncoder.encode("password123")
+```
+
+Returns a hashed password.
+
+Example:
+
+```text
+$2a$10$k8d...
+```
+
+---
+
+## Why Does BCrypt Produce Different Hashes?
+
+Hashing the same password multiple times produces different outputs.
+
+Example:
+
+```text
+password123
+↓
+
+$2a$10$ABC...
+```
+
+Again:
+
+```text
+password123
+↓
+
+$2a$10$XYZ...
+```
+
+Reason:
+
+BCrypt automatically generates a random **salt** for every hash.
+
+---
+
+## How Does Login Still Work?
+
+The generated hash stores:
+
+- Algorithm
+- Cost Factor
+- Salt
+- Hash
+
+During login:
+
+```text
+Raw Password
+        │
+        ▼
+Extract Salt From Stored Hash
+        │
+        ▼
+Hash Again
+        │
+        ▼
+Compare Hashes
+```
+
+If they match:
+
+```text
+Authentication Successful
+```
+
+---
+
+## Password Verification
+
+Spring Security automatically compares passwords using:
+
+```java
+passwordEncoder.matches(rawPassword, encodedPassword)
+```
+
+Developers usually never call this directly.
+
+AuthenticationManager performs this internally.
+
+---
+
+# InMemoryUserDetailsManager
+
+Current project uses:
+
+```java
+InMemoryUserDetailsManager
+```
+
+Purpose:
+
+Stores users in application memory.
+
+Useful for:
+
+- Learning
+- Testing
+- Small demos
+
+Limitations:
+
+- Users disappear after restarting the application.
+- Not suitable for production.
+
+---
+
+# CustomUserDetailsService
+
+Spring Security loads users using:
+
+```text
+AuthenticationManager
+        │
+        ▼
+UserDetailsService
+```
+
+In real applications:
+
+```text
+AuthenticationManager
+        │
+        ▼
+CustomUserDetailsService
+        │
+        ▼
+UserRepository
+        │
+        ▼
+Database
+```
+
+The method used is:
+
+```java
+loadUserByUsername(String username)
+```
+
+Purpose:
+
+Load user information from the database.
+
+This will be implemented in the upcoming project using PostgreSQL.
+
+---
+
+# Current Authentication Architecture
+
+```text
+POST /auth/login
+        │
+        ▼
+AuthenticationManager
+        │
+        ▼
+InMemoryUserDetailsManager
+        │
+        ▼
+PasswordEncoder (BCrypt)
+        │
+        ▼
+Authentication Successful
+        │
+        ▼
+Generate JWT
+        │
+        ▼
+Return JWT
+```
+
+---
+
+# Additional Concepts Learned
+
+- AuthenticationManager
+- UsernamePasswordAuthenticationToken
+- BadCredentialsException
+- PasswordEncoder
+- BCrypt
+- Password Hashing
+- Salt
+- InMemoryUserDetailsManager
+- UserDetailsService
+- Authentication Flow
